@@ -1,0 +1,27 @@
+# compute_core/CMakeLists.txt
+
+cmake_minimum_required(VERSION 3.10)
+project(MathComputeCore CXX)
+
+# Find the Eigen3 library
+find_package(Eigen3 REQUIRED)
+
+# Define our static library
+add_library(math_compute_core STATIC math_core.cpp)
+
+# Publicly include the Eigen headers and our local header
+target_include_directories(math_compute_core PUBLIC 
+    ${EIGEN3_INCLUDE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+
+# Set C++ standard
+target_compile_features(math_compute_core PUBLIC cxx_std_17)
+
+# ------------------------------------------------------------------
+# FIX: Add the install step required by the Rust 'cmake' crate build method.
+# This tells CMake where to place the static library file (.a or .lib).
+# ------------------------------------------------------------------
+install(TARGETS math_compute_core
+    DESTINATION lib
+)

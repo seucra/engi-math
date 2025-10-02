@@ -1,0 +1,13 @@
+# Cargo.toml
+
+[package]
+name = "engi_math"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+cxx = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"
+cmake = "0.1.48"

@@ -3,12 +3,12 @@
 // 1. The FFI Bridge Definition
 #[cxx::bridge]
 mod ffi {
-    // FIX: Change this to ONLY the header file name.
-    // The build script will provide the parent directory (compute_core/).
+    // The 'extern "C++"' block MUST be marked 'unsafe' if it contains
+    // functions that use raw pointers (*const T or *mut T).
     extern "C++" {
-        include!("math_core.h"); 
+        include!("compute_core/math_core.h");
 
-        // The function signatures must be inside an 'unsafe' block
+        // FIX: The function signatures must be inside an 'unsafe' block
         // when using raw pointers (*const T or *mut T).
         unsafe fn perform_matrix_vector_multiplication(
             matrix_ptr: *const f64,

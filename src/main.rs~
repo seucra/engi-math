@@ -1,0 +1,104 @@
+// src/main.rs
+
+use engi_math::calculate_matrix_vector_product;
+use clap::Parser;
+
+// --- 1. Error Handling (Rust Core Logic) ---
+
+#[derive(thiserror::Error, Debug)]
+enum EngiMathError {
+    #[error("Invalid input format: {0}")]
+    InputError(String),
+    #[error("Calculation error: {0}")]
+    CalculationFailed(String),
+}
+
+type Result<T> = std::result::Result<T, EngiMathError>;
+
+// --- 2. CLI Command Structs (Clap) ---
+
+#[derive(Parser, Debug)]
+#[command(author, version, about = "Engineering Mathematics Hybrid Tool (Rust/C++ Compute)", long_about = None)]
+struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Debug, Clone, clap::Subcommand)]
+enum Commands {
+    /// Solves a matrix-vector product problem (M * V)
+    MatrixProduct {
+        /// The dimension of the square matrix (e.g., 2 for 2x2)
+        #[arg(short, long)]
+        dim: usize,
+
+        /// Matrix elements, flattened and comma-separated (e.g., "2,0,0,3")
+        matrix: String,
+
+        /// Vector elements, comma-separated (e.g., "4,5")
+        vector: String,
+    },
+    // Future commands (e.g., ODESolve, Integrate, etc.) go here
+}
+
+// --- 3. Parsing Logic ---
+
+fn parse_input_vector(s: &str, dim: usize) -> Result<Vec<f64>> {
+    let result: std::result::Result<Vec<f64>, _> = s
+        .split(',')
+        .map(|s| s.trim().parse::<f64>())
+        .collect();
+
+    match result {
+        Ok(vec) => {
+            if vec.len() != dim * dim && dim * dim > 0 {
+                return Err(EngiMathError::InputError(format!(
+                    "Expected {} matrix elements, but found {}.", 
+                    dim * dim, vec.len()
+                )));
+            }
+            if vec.len() != dim && dim > 0 { // Check for vector size too
+                return Err(EngiMathError::InputError(format!(
+                    "Expected {} vector elements, but found {}.",
+                    dim, vec.len()
+                )));
+            }
+            Ok(vec)
+        }
+        Err(_) => Err(EngiMathError::InputError(
+            "All elements must be valid floating-point numbers.".into(),
+        )),
+    }
+}
+
+// --- 4. Main Application Logic ---
+
+fn main() -> Result<()> {
+    let cli = Cli::parse();
+    
+    match cli.command {
+        Commands::MatrixProduct { dim, matrix, vector } => {
+            if dim == 0 {
+                return Err(EngiMathError::InputError("Dimension (dim) must be greater than zero.".into()));
+            }
+
+            // Parse inputs and validate sizes
+            let matrix_flat = parse_input_vector(&matrix, dim * dim)?; 
+            let vector_in = parse_input_vector(&vector, dim)?; 
+            
+            // Call the Safe Rust API, which calls the C++ Eigen kernel
+            let output = calculate_matrix_vector_product(&matrix_flat, &vector_in, dim)
+                .map_err(EngiMathError::CalculationFailed)?;
+
+            // Display result
+            println!("\n--- Matrix-Vector Product Result ---");
+            println!("Dimension: {dim}x{dim}");
+            println!("Input Vector: {:?}", vector_in);
+            println!("Output Vector: [ {} ]", output.iter().map(|f| format!("{:.4}", f)).collect::<Vec<_>>().join(", "));
+            println!("------------------------------------\n");
+        }
+    }
+    
+    Ok(())
+}
+

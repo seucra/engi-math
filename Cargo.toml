@@ -1,6 +1,21 @@
 [package]
-name = "EngiMath"
+name = "engi_math"
 version = "0.1.0"
-edition = "2024"
+edition = "2021"
 
 [dependencies]
+cxx = "1.0"
+# Add command line argument parsing for the CLI
+clap = { version = "4.4", features = ["derive"] }
+# Add a custom error type handling library
+thiserror = "1.0"
+
+[build-dependencies]
+cxx-build = "1.0"
+cmake = "0.1.54"
+
+# Define the CLI executable target
+[[bin]]
+name = "engimath"
+path = "src/main.rs"
+
